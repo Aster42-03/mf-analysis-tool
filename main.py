@@ -10,22 +10,25 @@ with open("Data/Directory.csv", "r", newline='') as d:
     for code in reader:
         keys.append(code['Scheme Code'])
 
-
-
 field_names = [
     "fund_house","scheme_type","scheme_category",
     "scheme_code","scheme_name","scheme_start_date",
     "52_week_high","52_week_low"
 ]
 
-nav_field = ['date', 'nav']
+item = 10188
 
-with open("Data/Fund_Data.csv", "a", newline='') as fund:
+with open("Data/Fund_Index.csv", "a", newline='') as fund:
     writer = csv.DictWriter(fund, fieldnames=field_names, extrasaction='ignore')
-    for key in keys[11190:]:
+    for key in keys[item:]:
         raw = mf.get_scheme_historical_nav(key)
-        if raw == None:
+        if raw is None:
             continue
-
+        print(f"Currently on Item: {item + 1}")
         writer.writerow({field: raw[field] for field in field_names})
-
+        if item == 14288:
+            print("Process Completed, Please Validate the Data")
+            break
+        else:
+            item += 1
+...
