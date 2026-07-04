@@ -9,8 +9,8 @@ with open("Data/Directory.csv", "r", newline='') as d:
     for code in reader:
         keys.append(code['Scheme Code'])
 
+for key in keys:
+    r =  mf.get_scheme_historical_nav(key)
+    print(r)
 
-raw = mf.get_scheme_historical_nav("119551")
 
-print(gen_keys())
-print(type(raw))
