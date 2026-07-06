@@ -72,14 +72,14 @@ def process_fund(key):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    print(f"Currently Processing: {key}\n")
+    print(f"Currently Processing: {key}  ")
 
     # --- Fetch data (with retry/error handling) ---
     try:
         raw = mf.get_scheme_historical_nav(key)
         # --- validating ---
         if raw is None:
-            print(f"  Returned None — skipping.")
+            print(f"  Returned None for code: {key} — skipping.")
             return key, False
 
         if not isinstance(raw, dict) or 'fund_house' not in raw or 'data' not in raw:
@@ -92,7 +92,7 @@ def process_fund(key):
         nav_data = raw['data']  # should be a list of dicts with 'date' and 'nav'
 
         if not isinstance(nav_data, list):
-            print(f"  'data' field is not a list — skipping.")
+            print(f"  'data' field is not a list for code {key} — skipping.")
             return key, False
 
         # --- Enter all the rows for a fund in the database ---
@@ -114,7 +114,7 @@ def process_fund(key):
             conn.commit()
         except Exception as e:
             print(f"Insertion error: {e}")
-        print(f"    → Wrote {rows_inserted} rows.")
+        print(f"    → Wrote {rows_inserted} rows for code {key}. ")
         return key, True
 
     except Exception as e:
