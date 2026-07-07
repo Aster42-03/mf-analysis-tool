@@ -1,7 +1,6 @@
-# === ignore all the data files ===
+# === ignore the Data directory  ===
 Data/
-*.csv
-*txt
+
 
 # === Python Operating Cache ===
 __pycache__/
