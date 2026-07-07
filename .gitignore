@@ -1,4 +1,5 @@
 # === ignore all the data files ===
+Data/
 *.csv
 *txt
 
@@ -7,7 +8,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# === Virtual Environments (Crucial to ignore) ===
+# === Virtual Environments ===
 .venv/
 venv/
 ENV/
@@ -54,7 +55,7 @@ coverage.xml
 *.cover
 *.py,cover
 
-# === Environment Variables / Secrets (Never commit these!) ===
+# === Environment Variables / Secrets  ===
 .env
 .env.*
 secrets.json
