@@ -57,31 +57,23 @@ try:
 
     # --- Table to track Progress ---
     cursor.execute('''
-                   CREATE TABLE IF NOT EXISTS checkpoint
-                   (
-                       scheme_code
-                       TEXT
-                       PRIMARY
-                       KEY,
-                       completed_at
-                       TEXT
-                   )
-                   ''')
+           CREATE TABLE IF NOT EXISTS checkpoint
+           (
+               scheme_code   TEXT PRIMARY KEY,
+               completed_at  TEXT
+           )
+    ''')
 
     # --- Connecting and Creating a sqlite database ---
     cursor.execute('''
-                   CREATE TABLE IF NOT EXISTS nav_data
-                   (
-                       fund_house
-                       TEXT,
-                       scheme_code
-                       TEXT,
-                       date
-                       TEXT,
-                       nav
-                       REAL
-                   )
-                   ''')
+           CREATE TABLE IF NOT EXISTS nav_data
+           (
+               fund_house   TEXT,
+               scheme_code  TEXT,
+               date         TEXT,
+               nav          REAL
+           )
+           ''')
     con.commit()
 
 except psycopg2.OperationalError as e:
