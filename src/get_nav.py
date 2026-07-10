@@ -1,42 +1,35 @@
-from concurrent.futures.thread import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm.contrib.concurrent import thread_map
 from dotenv import load_dotenv
 from datetime import datetime
 from mftool import Mftool
-from pathlib import Path
+import psycopg2.extras
+import psycopg2.pool
 import psycopg2
+import random
+import json
 import time
-import csv
 import os
 
 mf = Mftool()
 
 # --- Configuration ---
-load_dotenv()
-INDEX_FILE = Path('../Data/Fund_Index.csv')
-DB_PATH = Path('../Data/Nav_Data.db')
-SLEEP_SECONDS = 0.5   # adjust as needed to avoid rate limiting
+MAX_RETRIES = 5
+BASE_DELAY = 1.0
 
 # Fields we write to the master CSV
-OUTPUT_FIELDS = ['fund_house', 'scheme_code', 'date', 'nav']
-
-# ----------------------------------------------------------------------
-# Load all scheme codes from the index
-with INDEX_FILE.open('r', newline='') as f:
-    reader = csv.DictReader(f)
-    keys = [row['scheme_code'] for row in reader]
-
-print(f"Loaded {len(keys)} scheme codes.")
-
+OUTPUT_FIELDS = ["fund_house", "scheme_code", "date", "nav"]
 
 
 # -----------------Data Base Related ---------------------------
 # --- Initialize the DataBase ---
+load_dotenv()
 DB_CONFIG = {
     "dbname": os.getenv("DB_NAME"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
     "host": os.getenv("DB_HOST"),
-    "port": os.getenv("DB_PORT")
+    "port": os.getenv("DB_PORT"),
 }
 
 # --- Test Connection ---
@@ -44,36 +37,40 @@ con = None
 try:
 
     # Start The Test
-    print(f"Trying to connect to DataBase: {DB_CONFIG['dbname']} as user {DB_CONFIG['user']}")
+    print(
+        f"Trying to connect to DataBase: {DB_CONFIG['dbname']} as user {DB_CONFIG['user']}"
+    )
     con = psycopg2.connect(**DB_CONFIG)
 
     # Display info
     cursor = con.cursor()
-    cursor.execute('SELECT version()')
+    cursor.execute("SELECT version()")
     db_ver = cursor.fetchone()
 
-    # Print info if successful
+    # tqdm.write info if successful
     print(f"Connection Successful, PostgreSQL version {db_ver[0]}")
 
     # --- Table to track Progress ---
-    cursor.execute('''
-           CREATE TABLE IF NOT EXISTS checkpoint
+    cursor.execute("""
+           CREATE TABLE IF NOT EXISTS checkpoint_nav
            (
-               scheme_code   TEXT PRIMARY KEY,
-               completed_at  TEXT
+               scheme_code      INT PRIMARY KEY REFERENCES fund_index(scheme_code) ON DELETE CASCADE,
+               last_synced      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               status           VARCHAR(20) DEFAULT 'COMPLETED'
            )
-    ''')
+    """)
 
     # --- Connecting and Creating a sqlite database ---
-    cursor.execute('''
-           CREATE TABLE IF NOT EXISTS nav_data
+    cursor.execute("""
+           CREATE TABLE IF NOT EXISTS historical_nav
            (
-               fund_house   TEXT,
-               scheme_code  TEXT,
-               date         TEXT,
-               nav          REAL
-           )
-           ''')
+                id                  SERIAL PRIMARY KEY,
+                scheme_code         INT REFERENCES fund_index(scheme_code) ON DELETE CASCADE,
+                nav_date            DATE,
+                nav                 REAL,
+                UNIQUE (scheme_code, nav_date)
+            );
+    """)
     con.commit()
 
 except psycopg2.OperationalError as e:
@@ -81,11 +78,19 @@ except psycopg2.OperationalError as e:
     print(e)
     exit(1)
 
+# --- Load the Keys ---
+keys = sorted(list(mf.get_scheme_codes()))
+
 # --- Load already completed keys ---
-cursor.execute('SELECT scheme_code FROM checkpoint')
+cursor.execute("SELECT scheme_code FROM checkpoint_nav")
 completed = {row[0] for row in cursor.fetchall()}
 remaining_keys = [k for k in keys if k not in completed]
 print(f"{len(remaining_keys)}: Scheme Codes Left to be Processed")
+
+cursor.close()
+con.close()
+
+db_pool = psycopg2.pool.ThreadedConnectionPool(minconn=5, maxconn=20, **DB_CONFIG)
 
 
 # ----------------------------------------------------------------------
@@ -93,95 +98,136 @@ print(f"{len(remaining_keys)}: Scheme Codes Left to be Processed")
 def process_fund(key):
 
     # Be polite to the API
-    time.sleep(SLEEP_SECONDS)
+    time.sleep(random.uniform(0.1, 0.7))
 
     # open connection per worker
-    conn = psycopg2.connect(**DB_CONFIG)
+    conn = db_pool.getconn()
     cur = conn.cursor()
-
-    print(f"Currently Processing: {key}  ")
 
     # --- Fetch data (with retry/error handling) ---
     try:
-        raw = mf.get_scheme_historical_nav(key)
+
+        raw = None
+        attempt = 0
+        # --- The Exponential Backoff Loop ---
+        while attempt < MAX_RETRIES:
+            try:
+                # Baseline Jitter
+                time.sleep(random.uniform(0.1, 0.5))
+
+                # API Call
+                raw = mf.get_scheme_historical_nav(key)
+
+                # If it succeeds without throwing a network error, break the retry loop!
+                break
+
+            except Exception as e:
+                attempt += 1
+                if attempt >= MAX_RETRIES:
+                    # Attempt according to max retries
+                    return key, False, 0, f"Max retries reached. Last error: {e}"
+
+                # Calculate Exponential Backoff + Jitter
+                sleep_time = (BASE_DELAY * (2 ** (attempt - 1))) + random.uniform(
+                    0, 1.0
+                )
+                time.sleep(sleep_time)
+
         # --- validating ---
         if raw is None:
-            print(f"  Returned None for code: {key} — skipping.")
-            return key, False
+            return key, False, 0, "API Returned None"
 
-        if not isinstance(raw, dict) or 'fund_house' not in raw or 'data' not in raw:
-            print(f"  Unexpected structure: {raw if isinstance(raw, dict) else type(raw)}")
-            return key, False
+        if not isinstance(raw, dict) or "fund_house" not in raw or "data" not in raw:
+            return key, False, 0, "Data Scheme is Incorrect"
 
         # --- Extract common info ---
-
-        fund_house = raw['fund_house']
-        nav_data = raw['data']  # should be a list of dicts with 'date' and 'nav'
+        nav_data = raw.get("data")  # should be a list of dicts with 'date' and 'nav'
 
         if not isinstance(nav_data, list):
-            print(f"  'data' field is not a list for code {key} — skipping.")
-            return key, False
+            return key, False, 0, "Nav Data doesn't match the requirements"
 
         # --- Enter all the rows for a fund in the database ---
         rows_inserted = 0
-        try:
-            rows = []
-            for entry in nav_data:
-                # Some entries might be missing 'date' or 'nav' — skip those
-                if 'date' not in entry or 'nav' not in entry:
-                    continue
-                rows.append((fund_house, key, entry['date'], float(entry['nav'])))
+        rows = []
+        for entry in nav_data:
+            if "date" not in entry or "nav" not in entry:
+                continue
+            try:
+                clean_date = datetime.strptime(entry["date"], "%d-%m-%Y").strftime(
+                    "%Y-%m-%d"
+                )
+
+                rows.append((key, clean_date, float(entry["nav"])))
                 rows_inserted += 1
-            insert_query = 'INSERT INTO nav_data (fund_house, scheme_code, date, nav) VALUES (%s, %s, %s, %s)'
-            cur.executemany(insert_query, rows)
+            except ValueError as v:
+                continue
 
-            # --- Update checkpoint after successful insertion ---
-            checkpoint_query = '''
-                               INSERT INTO checkpoint (scheme_code, completed_at)
-                               VALUES (%s, %s) ON CONFLICT (scheme_code) DO NOTHING 
-                               '''
-            cur.execute(checkpoint_query, (key, datetime.now().isoformat()))
+        if not rows:
+            return key, False, 0, "Rows were Empty"
+        insert_query = """
+                       INSERT INTO historical_nav (scheme_code, nav_date, nav) 
+                       VALUES %s
+                       ON CONFLICT (scheme_code, nav_date) DO NOTHING 
+                       """
+        psycopg2.extras.execute_values(cur, insert_query, rows)
 
-            conn.commit()
-        except Exception as e:
-            print(f"Insertion error: {e}")
-            conn.rollback()
-            return key, False
+        checkpoint_query = """
+                           INSERT INTO checkpoint_nav (scheme_code, status)
+                           VALUES (%s, 'COMPLETED') 
+                           ON CONFLICT (scheme_code) DO NOTHING 
+                           """
+        cur.execute(checkpoint_query, (key,))
+        conn.commit()
 
-        print(f"    → Wrote {rows_inserted} rows for code {key}. ")
-        return key, True
+        return key, True, rows_inserted, "Success"
 
     except Exception as e:
-        print(f"  API error: {e}")
-        return key, False
+        conn.rollback()
+        return key, False, 0, str(e)  # Pass the error message back
+
     finally:
         cur.close()
-        conn.close()
-# ----------------------------------------------------------------------
+        db_pool.putconn(conn)
 
-# Process keys with multithreading and logging the status on console
+
+# ----------------------------------------------------------------------
+failed = 0
 try:
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        result = executor.map(process_fund, remaining_keys)
-        failed = 0
-        for k, success in result:
+
+    results = thread_map(
+        process_fund,
+        remaining_keys,
+        max_workers=20,
+        desc="Ingesting Funds",
+        unit="fund",
+    )
+    failed = 0
+    # Log the progress in a .jsonl file
+    with open("Data/logs.jsonl", "w", newline="\n") as log:
+
+        for result_key, success, rows_count, message in results:
+
+            log_record = {
+                "timestamp": datetime.now().isoformat(),
+                "scheme_code": result_key,
+                "status": "SUCCESS" if success else "FAILED",
+                "rows_inserted": rows_count,
+                "message": message,
+            }
+
+            log.write(json.dumps(log_record) + "\n")
+
             if not success:
                 failed += 1
 
-    # --- Cleanup ---
-    if not remaining_keys:
-        # Everything was already done before this run
-        cursor.execute('DROP TABLE IF EXISTS checkpoint')
-        con.commit()
-        print("✓ All funds were already processed. Checkpoint deleted.")
-    elif failed == 0:
-        # This run completed everything
-        cursor.execute('DROP TABLE IF EXISTS checkpoint')
-        con.commit()
-        print("✓ All funds processed successfully. Checkpoint deleted.")
-    else:
-        print(f"  {failed} funds failed. Checkpoint kept for resumption.")
+
+except Exception as e:
+    print(f"Unknown thread crash : {e}")
+
+
 finally:
-    cursor.close()
-    con.close()
-    print("Done! Database is ready for Pandas.")
+    if "db_pool" in globals():
+        db_pool.closeall()
+        print("\nAll database pool connections closed cleanly.")
+
+    print(f"Done! {failed} funds failed. Database is ready!")
