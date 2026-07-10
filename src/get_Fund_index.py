@@ -45,8 +45,8 @@ cursor = conn.cursor()
 cursor.execute("""
    CREATE TABLE IF NOT EXISTS checkpoint_index
    (
-       scheme_code   TEXT PRIMARY KEY,
-       completed_at  TEXT
+       scheme_code   INT PRIMARY KEY,
+       completed_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
    )
 """)
 
@@ -66,7 +66,7 @@ cursor.execute("""
 conn.commit()
 
 # --- Load already completed keys ---
-cursor.execute("SELECT scheme_code FROM checkpoint")
+cursor.execute("SELECT scheme_code FROM checkpoint_index")
 completed = {row[0] for row in cursor.fetchall()}
 remaining_keys = [k for k in keys if k not in completed]
 print(f"{len(remaining_keys)}: Scheme Codes Left to be Processed")
@@ -129,11 +129,10 @@ def process_fund(code):
         # Update the Checkpoint
         # --- Update checkpoint after successful insertion ---
         checkpoint_query = """
-                           INSERT INTO checkpoint (scheme_code, completed_at)
-                           VALUES (%s, %s) 
+                           INSERT INTO checkpoint_index VALUES %s 
                            ON CONFLICT (scheme_code) DO NOTHING 
                            """
-        cursor.execute(checkpoint_query, (code, datetime.now().isoformat()))
+        cursor.execute(checkpoint_query, (code,))
         con.commit()
         return True, code
 
