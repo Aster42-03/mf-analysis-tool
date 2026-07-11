@@ -192,7 +192,7 @@ try:
         remaining_keys,
         max_workers=20,
         desc="Ingesting Funds",
-        unit="fund",
+        unit="Funds",
     )
     failed = 0
     # Log the progress in a .jsonl file

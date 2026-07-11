@@ -174,7 +174,7 @@ def process_fund(code):
         conn_pool.putconn(con)
 
 try:
-    results = thread_map(process_fund, remaining_keys, max_workers=20, desc='Logging Indices', unit='Fund')
+    results = thread_map(process_fund, remaining_keys, max_workers=20, desc='Logging Indices', unit='Funds')
 
     failed = 0
     # Log the progress in a .jsonl file
