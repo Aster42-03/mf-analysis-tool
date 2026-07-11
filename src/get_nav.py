@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm.contrib.concurrent import thread_map
 from dotenv import load_dotenv
 from datetime import datetime
@@ -16,9 +15,6 @@ mf = Mftool()
 # --- Configuration ---
 MAX_RETRIES = 5
 BASE_DELAY = 1.0
-
-# Fields we write to the master CSV
-OUTPUT_FIELDS = ["fund_house", "scheme_code", "date", "nav"]
 
 
 # -----------------Data Base Related ---------------------------
@@ -47,7 +43,7 @@ try:
     cursor.execute("SELECT version()")
     db_ver = cursor.fetchone()
 
-    # tqdm.write info if successful
+    # print info if successful
     print(f"Connection Successful, PostgreSQL version {db_ver[0]}")
 
     # --- Table to track Progress ---
@@ -83,7 +79,7 @@ keys = sorted(list(mf.get_scheme_codes()))
 
 # --- Load already completed keys ---
 cursor.execute("SELECT scheme_code FROM checkpoint_nav")
-completed = {row[0] for row in cursor.fetchall()}
+completed = {str(row[0]) for row in cursor.fetchall()}
 remaining_keys = [k for k in keys if k not in completed]
 print(f"{len(remaining_keys)}: Scheme Codes Left to be Processed")
 
@@ -96,9 +92,6 @@ db_pool = psycopg2.pool.ThreadedConnectionPool(minconn=5, maxconn=20, **DB_CONFI
 # ----------------------------------------------------------------------
 # Function to process each fund
 def process_fund(key):
-
-    # Be polite to the API
-    time.sleep(random.uniform(0.1, 0.7))
 
     # open connection per worker
     conn = db_pool.getconn()
@@ -159,7 +152,7 @@ def process_fund(key):
 
                 rows.append((key, clean_date, float(entry["nav"])))
                 rows_inserted += 1
-            except ValueError as v:
+            except (ValueError, TypeError):
                 continue
 
         if not rows:
@@ -203,7 +196,7 @@ try:
     )
     failed = 0
     # Log the progress in a .jsonl file
-    with open("Data/logs.jsonl", "w", newline="\n") as log:
+    with open("../Data/nav_logs.jsonl", "w", newline="\n") as log:
 
         for result_key, success, rows_count, message in results:
 
