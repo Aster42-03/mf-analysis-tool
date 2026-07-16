@@ -27,6 +27,7 @@ keys = sorted(list(mf.get_scheme_codes().keys()))
 
 conn_pool = psycopg2.pool.ThreadedConnectionPool(minconn=5, maxconn=20, **DB_CONFIG)
 
+
 # ---------------------------------------------------------------------------------------------
 def test_connection():
     """
@@ -34,12 +35,13 @@ def test_connection():
     :return: connection
     """
     try:
-        connection =  conn_pool.getconn()
+        connection = conn_pool.getconn()
         return connection
 
     except psycopg2.OperationalError as e:
         print(f"Connection failed. {e}")
         return None
+
 
 # ---------------------------------------------------------------------------------------------
 
@@ -87,6 +89,7 @@ conn_pool.putconn(conn)
 MAX_RETRIES = 5
 BASE_DELAY = 0.5
 
+
 # --- Worker Function to process each fund and load in DataBase
 def process_fund(code):
     """
@@ -113,7 +116,7 @@ def process_fund(code):
             if attempts >= MAX_RETRIES:
                 return False, code, f"Maximum Retries Reached, Error: {e}"
 
-        time.sleep((BASE_DELAY * (2 ** attempts - 1)) + random.uniform(0.1, 0.5))
+        time.sleep((BASE_DELAY * (2**attempts - 1)) + random.uniform(0.1, 0.5))
 
     # get raw data from the API
     try:
@@ -125,7 +128,9 @@ def process_fund(code):
         dates = details.pop("scheme_start_date")  # get the nested dict inside raw
 
         try:
-            clean_date = datetime.strptime(dates.get("date"), "%d-%m-%Y").strftime("%Y-%m-%d")
+            clean_date = datetime.strptime(dates.get("date"), "%d-%m-%Y").strftime(
+                "%Y-%m-%d"
+            )
             clean_nav = float(dates.get("nav"))
         except (ValueError, TypeError):
             # If the API returns 'N/A' or None, insert NULLs into the database
@@ -146,7 +151,6 @@ def process_fund(code):
         if not re.search(r"\w", str(details.get("fund_house", ""))):
             return False, code, f"Invalid Entry"
 
-
         cursor.execute(
             """
         INSERT INTO fund_index (fund_house, scheme_type, scheme_category, scheme_code, scheme_name, scheme_start_date, nav)
@@ -166,7 +170,6 @@ def process_fund(code):
         con.commit()
         return True, code, f"Inserted Data"
 
-
     except Exception as e:
         con.rollback()
         return False, code, f"Insertion Error: {e}"
@@ -174,8 +177,15 @@ def process_fund(code):
         cursor.close()
         conn_pool.putconn(con)
 
+
 try:
-    results = thread_map(process_fund, remaining_keys, max_workers=20, desc='Logging Indices', unit='Funds')
+    results = thread_map(
+        process_fund,
+        remaining_keys,
+        max_workers=20,
+        desc="Logging Indices",
+        unit="Funds",
+    )
 
     failed = 0
     # Log the progress in a .jsonl file
@@ -199,5 +209,7 @@ except Exception as e:
     print(f"Unknown Thread Crash: {e}")
 
 finally:
-    print(f"Process Completed. Checkpoint Kept for Resumption, Check Logs for Further Info.")
+    print(
+        f"Process Completed. Checkpoint Kept for Resumption, Check Logs for Further Info."
+    )
     conn_pool.closeall()
