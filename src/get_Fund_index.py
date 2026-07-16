@@ -8,7 +8,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 from tqdm.contrib.concurrent import thread_map
 import psycopg2
-import psycopg2.extras
 import psycopg2.pool
 from mftool import Mftool
 
