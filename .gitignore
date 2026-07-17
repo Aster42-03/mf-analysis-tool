@@ -1,5 +1,6 @@
-# === ignore the Data directory  ===
+# === Ignore these directories ===
 Data/
+tests/
 
 # === Python Operating Cache ===
 __pycache__/
