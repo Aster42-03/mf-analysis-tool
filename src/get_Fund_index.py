@@ -69,8 +69,7 @@ cursor.execute("""
             scheme_category         VARCHAR,
             scheme_code             INT PRIMARY KEY,
             scheme_name             VARCHAR,
-            scheme_start_date       DATE,
-            nav                     REAL
+            scheme_start_date       DATE
         )
 """)
 conn.commit()
@@ -93,7 +92,7 @@ BASE_DELAY = 0.5
 # --- Worker Function to process each fund and load in DataBase
 def process_fund(code):
     """
-    Processes each fund scheme code and loads it into the database
+    Processes each Fund Scheme code and loads it into the database
     :param code:
     :return: Success, code
     """
@@ -131,11 +130,9 @@ def process_fund(code):
             clean_date = datetime.strptime(dates.get("date"), "%d-%m-%Y").strftime(
                 "%Y-%m-%d"
             )
-            clean_nav = float(dates.get("nav"))
         except (ValueError, TypeError):
             # If the API returns 'N/A' or None, insert NULLs into the database
             clean_date = None
-            clean_nav = None
 
         # 2. Explicitly map variables to guarantee exact SQL order
         row = (
@@ -145,7 +142,6 @@ def process_fund(code):
             int(details.get("scheme_code")),
             details.get("scheme_name"),
             clean_date,
-            clean_nav,
         )
 
         if not re.search(r"\w", str(details.get("fund_house", ""))):
@@ -153,8 +149,8 @@ def process_fund(code):
 
         cursor.execute(
             """
-        INSERT INTO fund_index (fund_house, scheme_type, scheme_category, scheme_code, scheme_name, scheme_start_date, nav)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO fund_index (fund_house, scheme_type, scheme_category, scheme_code, scheme_name, scheme_start_date)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (scheme_code) DO NOTHING 
         """,
             row,

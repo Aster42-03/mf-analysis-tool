@@ -51,7 +51,7 @@ try:
            CREATE TABLE IF NOT EXISTS checkpoint_nav
            (
                scheme_code      INT PRIMARY KEY REFERENCES fund_index(scheme_code) ON DELETE CASCADE,
-               last_synced      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               last_synced      TIMESTAMP DEFAULT NOW(),
                status           VARCHAR(20) DEFAULT 'COMPLETED'
            )
     """)
@@ -60,11 +60,10 @@ try:
     cursor.execute("""
            CREATE TABLE IF NOT EXISTS historical_nav
            (
-                id                  SERIAL PRIMARY KEY,
                 scheme_code         INT REFERENCES fund_index(scheme_code) ON DELETE CASCADE,
                 nav_date            DATE,
                 nav                 REAL,
-                UNIQUE (scheme_code, nav_date)
+                PRIMARY KEY (scheme_code, nav_date)
             );
     """)
     con.commit()
@@ -194,9 +193,11 @@ try:
         desc="Ingesting Funds",
         unit="Funds",
     )
-    failed = 0
     # Log the progress in a .jsonl file
-    with open("../Data/nav_logs.jsonl", "w", newline="\n") as log:
+    with open(
+        "../Data/nav_logs.jsonl",
+        "w",
+    ) as log:
 
         for result_key, success, rows_count, message in results:
 
