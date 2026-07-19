@@ -1,0 +1,17 @@
+[project]
+name = "finance-tool"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[all]==0.139.2",
+    "mftool==3.3",
+    "psycopg>=3.3.4",
+    "psycopg2==2.9.12",
+    "psycopg2-binary==2.9.12",
+    "pydantic==2.13.4",
+    "python-dotenv==1.2.2",
+    "sqlalchemy==2.0.51",
+    "tqdm==4.68.4",
+]
