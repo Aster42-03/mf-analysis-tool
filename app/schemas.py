@@ -12,3 +12,11 @@ class GetFund(BaseModel):
     scheme_start_date: date = Field(serialization_alias="Start Date")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GetNav(BaseModel):
+
+    nav_date: date = Field(serialization_alias="Date")
+    nav: float
+
+    model_config = ConfigDict(from_attributes=True)
