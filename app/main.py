@@ -11,8 +11,6 @@ from app import schemas
 
 app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
-
 db_dep = Annotated[AsyncSession, Depends(get_db)]
 
 
