@@ -51,7 +51,7 @@ try:
            CREATE TABLE IF NOT EXISTS checkpoint_nav
            (
                scheme_code      INT PRIMARY KEY REFERENCES fund_index(scheme_code) ON DELETE CASCADE,
-               last_synced      TIMESTAMP DEFAULT NOW(),
+               last_synced      TIMESTAMPZ DEFAULT NOW(),
                status           VARCHAR(20) DEFAULT 'COMPLETED'
            )
     """)
