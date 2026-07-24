@@ -56,7 +56,7 @@ cursor.execute("""
    CREATE TABLE IF NOT EXISTS checkpoint_index
    (
        scheme_code   INT PRIMARY KEY,
-       completed_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       completed_at  TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP
    )
 """)
 
