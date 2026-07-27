@@ -51,7 +51,7 @@ try:
            CREATE TABLE IF NOT EXISTS checkpoint_nav
            (
                scheme_code      INT PRIMARY KEY REFERENCES fund_index(scheme_code) ON DELETE CASCADE,
-               last_synced      TIMESTAMPZ DEFAULT NOW(),
+               last_synced      TIMESTAMPTZ DEFAULT NOW(),
                status           VARCHAR(20) DEFAULT 'COMPLETED'
            )
     """)
@@ -161,7 +161,7 @@ def process_fund(key):
                        VALUES %s
                        ON CONFLICT (scheme_code, nav_date) DO NOTHING 
                        """
-        psycopg2.extras.execute_values(cur, insert_query, rows)
+        psycopg2.extras.execute_values(cur, insert_query, rows, page_size=8000)
 
         checkpoint_query = """
                            INSERT INTO checkpoint_nav (scheme_code, status)

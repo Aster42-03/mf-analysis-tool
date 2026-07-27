@@ -23,7 +23,7 @@ DB_CONFIG = {
     "port": os.getenv("DB_PORT"),
 }
 
-keys = sorted(list(mf.get_scheme_codes().keys()))
+keys = list(mf.get_scheme_codes().keys())
 
 conn_pool = psycopg2.pool.ThreadedConnectionPool(minconn=5, maxconn=20, **DB_CONFIG)
 
@@ -56,7 +56,7 @@ cursor.execute("""
    CREATE TABLE IF NOT EXISTS checkpoint_index
    (
        scheme_code   INT PRIMARY KEY,
-       completed_at  TIMESTAMPZ DEFAULT CURRENT_TIMESTAMP
+       completed_at  TIMESTAMPTZ DEFAULT NOW()
    )
 """)
 
