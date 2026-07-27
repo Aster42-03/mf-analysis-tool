@@ -22,7 +22,7 @@ async def root() -> Any:
 @app.get("/fund/{code}", response_model=schemas.GetFund)
 async def get_fund(code: int, db: db_dep) -> Any:
 
-    fund = await db.get(FundIndex, str(code), options=[selectinload(FundIndex.nav)])
+    fund = await db.get(FundIndex, code, options=[selectinload(FundIndex.nav)])
     if not fund:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Fund not Found"

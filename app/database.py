@@ -2,11 +2,14 @@ import os
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-from dotenv import load_dotenv
+from .config import settings
 
-load_dotenv()
+DB_URL = settings.db_url
 
-DB_URL = f"postgresql+asyncpg://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+if not DB_URL:
+    raise ValueError("CRITICAL ERROR: DB_URL environment variable is missing or None!")
+
+print(f"Connecting to database at: {DB_URL}")
 
 engine = create_async_engine(DB_URL, pool_size=5, max_overflow=15, pool_pre_ping=True)
 
