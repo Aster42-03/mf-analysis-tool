@@ -15,7 +15,6 @@ class GetFund(BaseModel):
 
 
 class GetNav(BaseModel):
-
     nav_date: date = Field(serialization_alias="Date")
     nav: float
 
