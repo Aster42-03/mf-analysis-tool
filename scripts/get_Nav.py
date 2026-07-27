@@ -1,6 +1,5 @@
 from tqdm.contrib.concurrent import thread_map
 from dotenv import load_dotenv
-from datetime import datetime
 from mftool import Mftool
 import psycopg2.extras
 import psycopg2.pool
@@ -74,7 +73,7 @@ except psycopg2.OperationalError as e:
     exit(1)
 
 # --- Load the Keys ---
-keys = sorted(list(mf.get_scheme_codes()))
+keys = list(mf.get_scheme_codes())
 
 # --- Load already completed keys ---
 cursor.execute("SELECT scheme_code FROM checkpoint_nav")
