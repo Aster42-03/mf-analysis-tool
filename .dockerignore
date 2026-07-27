@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Secrets (Crucial!)
+.env
+.env.*
+
+# Python Virtual Environments
+.venv/
+env/
+venv/
+
+# Python Cache (Prevents weird bugs)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# IDEs and Tools
+.vscode/
+.idea/
+.cursor/
