@@ -32,3 +32,7 @@ update:
 [doc( "Shows Logs from API" )]
 api-logs:
     docker compose up api
+
+[ doc( "Run The Tests" )]
+test:
+    uv run pytest -v

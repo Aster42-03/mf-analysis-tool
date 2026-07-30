@@ -48,6 +48,7 @@ htmlcov/
 coverage.xml
 *.cover
 *.py,cover
+.coverage
 
 # === Environment Variables / Secrets  ===
 .env
