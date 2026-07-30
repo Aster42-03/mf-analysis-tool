@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from tqdm.contrib.concurrent import thread_map
 from dotenv import load_dotenv
 from mftool import Mftool
