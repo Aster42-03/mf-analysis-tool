@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from .dependencies import get_db
-from .database import engine, Base
 from .models import FundIndex, HistoricalNav
 from app import schemas
 
