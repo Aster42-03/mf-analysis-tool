@@ -2,7 +2,7 @@
 .git
 .gitignore
 
-# Secrets (Crucial!)
+# Secrets
 .env
 .env.*
 
@@ -11,7 +11,7 @@
 env/
 venv/
 
-# Python Cache (Prevents weird bugs)
+# Python Cache
 __pycache__/
 *.pyc
 *.pyo

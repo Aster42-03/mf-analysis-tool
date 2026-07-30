@@ -8,7 +8,7 @@ dependencies = [
     "alembic>=1.9.4",
     "asyncpg>=0.31.0",
     "black>=26.5.1",
-    "fastapi[all]==0.139.2",
+    "fastapi[all]>=0.139.2",
     "mftool==3.3",
     "psycopg>=3.3.4",
     "psycopg2-binary>=2.9.12",
@@ -16,7 +16,7 @@ dependencies = [
     "python-dotenv==1.2.2",
     "scalene>=2.3.0",
     "sqlalchemy==2.0.51",
-    "tqdm==4.68.4",
+    "tqdm>=4.68.4",
     "uliweb-alembic>=0.6.9",
 ]
 
