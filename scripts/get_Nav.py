@@ -32,7 +32,6 @@ DB_CONFIG = {
 # --- Test Connection ---
 con = None
 try:
-
     # Start The Test
     print(
         f"Trying to connect to DataBase: {DB_CONFIG['dbname']} as user {DB_CONFIG['user']}"
@@ -99,7 +98,6 @@ def process_fund(key):
 
     # --- Fetch data (with retry/error handling) ---
     try:
-
         raw = None
         attempt = 0
         # --- The Exponential Backoff Loop ---
@@ -186,7 +184,6 @@ def process_fund(key):
 # ----------------------------------------------------------------------
 failed = 0
 try:
-
     results = thread_map(
         process_fund,
         remaining_keys,
@@ -199,9 +196,7 @@ try:
         "../Data/nav_logs.jsonl",
         "w",
     ) as log:
-
         for result_key, success, rows_count, message in results:
-
             log_record = {
                 "timestamp": datetime.now().isoformat(),
                 "scheme_code": result_key,

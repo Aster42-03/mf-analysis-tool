@@ -119,7 +119,6 @@ def process_fund(code):
 
     # get raw data from the API
     try:
-
         # Validate API response
         if not details or "scheme_start_date" not in details:
             return False, code, f"Invalid API data for code - Skipping"
@@ -186,9 +185,7 @@ try:
     failed = 0
     # Log the progress in a .jsonl file
     with open("../Data/index_logs.jsonl", "w", newline="\n") as log:
-
         for success, key, message in results:
-
             log_record = {
                 "timestamp": datetime.now().isoformat(),
                 "scheme_code": key,

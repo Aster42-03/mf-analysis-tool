@@ -1,12 +1,14 @@
 from typing import Annotated, Any
-from fastapi import FastAPI, Depends, HTTPException, status
+
+from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app import schemas
+
 from .dependencies import get_db
 from .models import FundIndex, HistoricalNav
-from app import schemas
 
 app = FastAPI()
 
@@ -15,7 +17,7 @@ db_dep = Annotated[AsyncSession, Depends(get_db)]
 
 @app.get("/")
 async def root() -> Any:
-    return {"message": "hello"}
+    return {"message": "Hello"}
 
 
 @app.get("/fund/{code}", response_model=schemas.GetFund)
