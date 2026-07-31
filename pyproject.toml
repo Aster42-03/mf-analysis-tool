@@ -47,7 +47,7 @@ addopts = ['--cov=.', '--cov-report=term-missing', '--cov-branch', '--cov-fail-u
 pythonpath = ["."]
 
 [tool.pytest_env]
-DB_URL = "postgresql+asyncpg://aster42:your_password@localhost:5432/mf_data"
+DB_URL = "postgresql+asyncpg://aster:aster42@localhost:5432/mf_data"
 
 [tool.coverage.run]
 omit = [
