@@ -34,4 +34,8 @@ async def get_fund( code: int, db: db_dep ) -> Any:
 async def get_nav( code: int, db: db_dep ) -> Any:
     res = select( HistoricalNav ).where( HistoricalNav.scheme_code == code )
     nav = await db.scalars( res )
+    if not nav.all():
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND, detail = "No Such Fund"
+        )
     return nav.all()
