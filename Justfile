@@ -8,6 +8,10 @@ set shell := ["bash", "-c"]
 build:
     docker compose up -d --build api
 
+[doc("Open The API in Devlopment Mode")]
+dev:
+    docker compose up api
+
 [ doc( "Start The Services after the Initial Build" ) ]
 start:
     docker compose up -d api
@@ -31,7 +35,7 @@ update:
 
 [doc( "Shows Logs from API" )]
 show-logs:
-    docker logs -f api
+    docker logs -f mf-analysis-tool-api-1
 
 [ doc( "Run The Tests" )]
 test:

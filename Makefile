@@ -39,7 +39,7 @@ update:
 
 ## api-logs: Shows Logs from API
 show-logs:
-	docker logs -f api
+	docker logs -f mf-analysis-tool-api-1
 
 ## run the tests
 test:
