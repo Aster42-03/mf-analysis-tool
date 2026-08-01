@@ -30,8 +30,8 @@ update:
     docker compose run --rm updater
 
 [doc( "Shows Logs from API" )]
-api-logs:
-    docker compose up api
+show-logs:
+    docker logs -f api
 
 [ doc( "Run The Tests" )]
 test:
