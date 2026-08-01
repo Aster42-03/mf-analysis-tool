@@ -40,3 +40,7 @@ update:
 ## api-logs: Shows Logs from API
 api-logs:
 	docker compose up api
+
+## run the tests
+test:
+	uv run pytest -v
