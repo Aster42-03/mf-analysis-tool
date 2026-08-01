@@ -36,7 +36,6 @@ services:
         - action: sync
           path: ./app
           target: /usr/src/app
-          initial_sync: true
     depends_on:
       - db
 
