@@ -46,3 +46,11 @@ def test_get_nav( client ):
 
     assert response.status_code == 200
     assert isinstance( data, list )
+
+
+def test_nav_not_found( client ):
+    response = client.get( "/fund/nav/999999" )
+    data = response.json()
+
+    assert response.status_code == 404
+    assert data == { "detail": "No Such Fund" }
