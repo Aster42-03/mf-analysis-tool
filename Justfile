@@ -39,4 +39,4 @@ show-logs:
 
 [ doc( "Run The Tests" )]
 test:
-    uv run pytest -v
+    uv run pytest -v -x
