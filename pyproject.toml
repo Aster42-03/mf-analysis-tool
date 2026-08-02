@@ -44,10 +44,10 @@ default-groups = ["test"]
 [tool.pytest.ini_options]
 testpaths = ['tests']
 addopts = ['--cov=.', '--cov-report=term-missing', '--cov-branch', '--cov-fail-under=80', '-p', 'no:warnings']
+env_file = [
+    ".env.test"
+]
 pythonpath = ["."]
-
-[tool.pytest_env]
-DB_URL = "postgresql+asyncpg://aster:aster42@localhost:5434/mf_data"
 
 [tool.coverage.run]
 omit = [
