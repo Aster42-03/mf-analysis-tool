@@ -30,6 +30,7 @@ test = [
     "httpx2>=2.9.1",
     "hypothesis>=6.163.0",
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-env>=1.7.0",
     "testcontainers[postgres]>=4.15.0",
@@ -44,9 +45,10 @@ default-groups = ["test"]
 [tool.pytest.ini_options]
 testpaths = ['tests']
 addopts = ['--cov=.', '--cov-report=term-missing', '--cov-branch', '--cov-fail-under=80', '-p', 'no:warnings']
-env_file = [
+env_files = [
     ".env.test"
 ]
+env_override_existing_values = 1
 pythonpath = ["."]
 
 [tool.coverage.run]
