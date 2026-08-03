@@ -1,11 +1,9 @@
-from collections.abc import AsyncGenerator
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import AsyncGenerator
 
 from .database import AsyncSessionLocal
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db() -> AsyncGenerator[ AsyncSession, None ]:
     """
     Generates Async Sessions to be used by other Functions
     :return: Session Object
