@@ -1,14 +1,11 @@
 import pytest
-from fastapi.testclient import TestClient
 
-from app.main import app
+from app.database import verify_conn
 
 
-# Creating Fake Browser
-@pytest.fixture( scope = "module" )
-def client():
-    with TestClient( app ) as test_client:
-        yield test_client
+def test_bad_conn():
+    with pytest.raises( ValueError ):
+        verify_conn( None )
 
 
 # Functions to Test The Root Endpoint

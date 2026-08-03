@@ -1,16 +1,19 @@
 import os
 
 import pytest
+from fastapi.testclient import TestClient
+from app.database import engine, verify_conn
+from app.main import app
 
-from app.database import verify_conn
 
-
-@pytest.fixture
+@pytest.fixture( scope = 'session', autouse = True )
 def test_db_conn():
-    url = verify_conn(os.getenv("DB_URL"))
-    assert url == "postgresql+asyncpg://aster:wrong_password@db:5432/mf_data"
+    url = verify_conn( os.getenv( 'DB_URL' ) )
+    assert url == "postgresql+asyncpg://aster:aster42@localhost:5434/mf_data"
 
 
-def test_bad_conn():
-    with pytest.raises(ValueError):
-        verify_conn(os.getenv("BAD_DB_URL"))
+# Creating Fake Browser
+@pytest.fixture( scope = "module" )
+def client():
+    with TestClient( app ) as test_client:
+        yield test_client
