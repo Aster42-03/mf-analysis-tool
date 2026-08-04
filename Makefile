@@ -43,4 +43,4 @@ show-logs:
 
 ## run the tests
 test:
-	uv run pytest -v -x
+	uv run pytest -sxv
