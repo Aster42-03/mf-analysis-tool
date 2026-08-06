@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from fastapi.middleware.cors import CORSMiddleware
 
 from app import schemas
 
@@ -11,7 +12,23 @@ from .dependencies import get_db
 from .models import FundIndex, HistoricalNav
 
 
+origins = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://localhost:5137",
+    "http://127.0.0.1:5137"
+]
+
 app = FastAPI()
+
+# noinspection bad-argument-type
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = origins,
+    allow_credentials = True,
+    allow_methods = [ "*" ],
+    allow_headers = [ "*" ],
+)
 
 db_dep = Annotated[ AsyncSession, Depends( get_db ) ]
 
